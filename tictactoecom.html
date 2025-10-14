@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tic Tac Toe — Player vs Computer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f1724;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      text-align: center;
+    }
+    h1 {
+      color: #06b6d4;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 10px;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #1e293b;
+      border: 2px solid #06b6d4;
+      font-size: 48px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .cell.taken {
+      cursor: default;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #06b6d4;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #031026;
+      font-weight: bold;
+    }
+    #status {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
+    <div class="board" id="board"></div>
+    <div id="status">Your turn (X)</div>
+    <button onclick="restartGame()">Restart</button>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    let board = Array(9).fill('');
+    let running = true;
+    const player = 'X';
+    const computer = 'O';
+
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    function createBoard() {
+      boardEl.innerHTML = '';
+      board.forEach((cell, i) => {
+        const div = document.createElement('div');
+        div.classList.add('cell');
+        div.dataset.index = i;
+        div.addEventListener('click', playerMove);
+        boardEl.appendChild(div);
+      });
+    }
+
+    function playerMove(e) {
+      const i = e.target.dataset.index;
+      if (!running || board[i]) return;
+      board[i] = player;
+      e.target.textContent = player;
+      e.target.classList.add('taken');
+      if (checkWinner(player)) return endGame('You win! 🎉');
+      if (isDraw()) return endGame("It's a draw! 🤝");
+      statusEl.textContent = "Computer's turn...";
+      running = false;
+      setTimeout(computerMove, 600);
+    }
+
+    function computerMove() {
+      let move = findBestMove();
+      if (move === null) return endGame("It's a draw! 🤝");
+      board[move] = computer;
+      const cell = document.querySelector(`[data-index='${move}']`);
+      cell.textContent = computer;
+      cell.classList.add('taken');
+      if (checkWinner(computer)) return endGame('Computer wins 💻');
+      if (isDraw()) return endGame("It's a draw! 🤝");
+      running = true;
+      statusEl.textContent = 'Your turn (X)';
+    }
+
+    function findBestMove() {
+      // Try to win
+      for (let [a,b,c] of wins) {
+        if (board[a] === computer && board[b] === computer && !board[c]) return c;
+        if (board[a] === computer && board[c] === computer && !board[b]) return b;
+        if (board[b] === computer && board[c] === computer && !board[a]) return a;
+      }
+      // Block player
+      for (let [a,b,c] of wins) {
+        if (board[a] === player && board[b] === player && !board[c]) return c;
+        if (board[a] === player && board[c] === player && !board[b]) return b;
+        if (board[b] === player && board[c] === player && !board[a]) return a;
+      }
+      // Otherwise random move
+      const empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+      if (empty.length === 0) return null;
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+
+    function checkWinner(symbol) {
+      return wins.some(([a,b,c]) => board[a] === symbol && board[b] === symbol && board[c] === symbol);
+    }
+
+    function isDraw() {
+      return board.every(cell => cell !== '');
+    }
+
+    function endGame(message) {
+      running = false;
+      statusEl.textContent = message;
+    }
+
+    function restartGame() {
+      board = Array(9).fill('');
+      running = true;
+      statusEl.textContent = 'Your turn (X)';
+      createBoard();
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>
